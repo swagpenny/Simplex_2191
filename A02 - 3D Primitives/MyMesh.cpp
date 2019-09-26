@@ -276,7 +276,18 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	float divAngle = 2.0f * PI / (float)a_nSubdivisions;
+	float halfHeight = 0.5f * a_fHeight;
+
+	for (int i = 0; i < a_nSubdivisions; i++) {
+		vector3 point1(a_fRadius * cosf((i + 1) * divAngle), a_fRadius * sinf((i + 1) * divAngle), -halfHeight);
+		vector3 point2(a_fRadius * cosf(i * divAngle), a_fRadius * sinf(i * divAngle), -halfHeight);
+		vector3 baseCenter(0.0f, 0.0f, -halfHeight);
+		vector3 top(0.0f, 0.0f, halfHeight);
+
+		AddTri(point2, point1, baseCenter);
+		AddTri(point1, point2, top);
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -300,7 +311,21 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	float divAngle = 2.0f * PI / (float)a_nSubdivisions;
+	float halfHeight = 0.5f * a_fHeight;
+
+	for (int i = 0; i < a_nSubdivisions; i++) {
+		vector3 point1(a_fRadius * cosf((i + 1) * divAngle), a_fRadius * sinf((i + 1) * divAngle), -halfHeight);
+		vector3 point2(a_fRadius * cosf(i * divAngle), a_fRadius * sinf(i * divAngle), -halfHeight);
+		vector3 point3(a_fRadius * cosf((i + 1) * divAngle), a_fRadius * sinf((i + 1) * divAngle), halfHeight);
+		vector3 point4(a_fRadius * cosf(i * divAngle), a_fRadius * sinf(i * divAngle), halfHeight);
+		vector3 bottomCenter(0.0f, 0.0f, -halfHeight);
+		vector3 topCenter(0.0f, 0.0f, halfHeight);
+
+		AddTri(bottomCenter, point1, point2);
+		AddTri(point4, point3, topCenter);
+		AddQuad(point3, point4, point1, point2);
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -330,7 +355,31 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	float divAngle = 2.0f * PI / (float)a_nSubdivisions;
+	float halfHeight = 0.5f * a_fHeight;
+
+	for (int i = 0; i < a_nSubdivisions; i++) {
+		vector3 point1(a_fOuterRadius * cosf((i + 1) * divAngle), a_fOuterRadius * sinf((i + 1) * divAngle), -halfHeight);
+		vector3 point2(a_fOuterRadius * cosf(i * divAngle), a_fOuterRadius * sinf(i * divAngle), -halfHeight);
+		vector3 point3(a_fOuterRadius * cosf((i + 1) * divAngle), a_fOuterRadius * sinf((i + 1) * divAngle), halfHeight);
+		vector3 point4(a_fOuterRadius * cosf(i * divAngle), a_fOuterRadius * sinf(i * divAngle), halfHeight);
+
+		vector3 point5(a_fInnerRadius * cosf((i + 1) * divAngle), a_fInnerRadius * sinf((i + 1) * divAngle), -halfHeight);
+		vector3 point6(a_fInnerRadius * cosf(i * divAngle), a_fInnerRadius * sinf(i * divAngle), -halfHeight);
+		vector3 point7(a_fInnerRadius * cosf((i + 1) * divAngle), a_fInnerRadius * sinf((i + 1) * divAngle), halfHeight);
+		vector3 point8(a_fInnerRadius * cosf(i * divAngle), a_fInnerRadius * sinf(i * divAngle), halfHeight);
+
+		vector3 bottomCenter(0.0f, 0.0f, -halfHeight);
+		vector3 topCenter(0.0f, 0.0f, halfHeight);
+
+		// Horizontal Sides
+		AddQuad(point1, point2, point5, point6);
+		AddQuad(point4, point3, point8, point7);
+
+		// Vertical Sides
+		AddQuad(point3, point4, point1, point2);
+		AddQuad(point5, point6, point7, point8);
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -362,7 +411,69 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	std::vector<vector3> vertices;	// list to store all the vertices on a sphere
+
+	float x, y, z, xy;		// vertex positions
+
+	int stackCount = a_nSubdivisionsA * 3;
+	int sectorCount = stackCount;
+
+	float stackAngle, sectorAngle;
+	float stackStep = PI / stackCount;
+	float sectorStep = 2 * PI / sectorCount;
+	float r = a_fOuterRadius;
+
+	// 1. Compute all vertices and store them int the vector (list)
+	// Stack count
+	for (int i = 0; i <= stackCount; i++) {
+		stackAngle = PI / 2 - i * stackStep;	// from PI / 2 to -PI / 2
+		xy = r * cosf(stackAngle);		// r * cos(u)
+		z = r * sinf(stackAngle);			// r * sin(u)
+
+		// Sector Count
+		for (int j = 0; j <= sectorCount; j++) {
+			sectorAngle = j * sectorStep;	// from 0 to 2PI
+
+			// Calculate vector3(x, y, z)
+			x = xy * cosf(sectorAngle);
+			y = xy * sinf(sectorAngle);
+
+			vector3 point(x, y, z);
+			vertices.push_back(point);
+		}
+	}
+
+	// 2. Find out vertices groups to form triangles
+	int k1, k2;				// indices
+
+	for (int i = 0; i < stackCount; i++) {
+		k1 = i * (sectorCount + 1);		// beginning of current stack row on sphere
+		k2 = (i + 1) * (sectorCount + 1);		// beginning of the next stack row on sphere
+
+		for (int j = 0; j < sectorCount; j++, k1++, k2++) {
+			// get 4 vertices per sector
+			//  v1--v3
+			//  |    |
+			//  v2--v4
+			vector3 v1 = vertices[k1];
+			vector3 v2 = vertices[k2];
+			vector3 v3 = vertices[k1 + 1];
+			vector3 v4 = vertices[k2 + 1];
+
+			// 1st stack stores only 1 triangle per sector
+			if (i == 0) {
+				AddTri(v1, v2, v4);
+			}
+			// One triangle for last stack
+			else if (i == stackCount - 1) {
+				AddTri(v1, v2, v3);
+			}
+			// 2 triangles for others
+			else {
+				AddQuad(v2, v4, v1, v3);
+			}
+		}
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -387,7 +498,69 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	std::vector<vector3> vertices;	// list to store all the vertices on a sphere
+
+	float x, y, z, xy;		// vertex positions
+
+	int stackCount = a_nSubdivisions * 3;
+	int sectorCount = stackCount;
+
+	float stackAngle, sectorAngle;
+	float stackStep = PI / stackCount;
+	float sectorStep = 2 * PI / sectorCount;
+	float r = a_fRadius;
+
+	// 1. Compute all vertices and store them int the vector (list)
+	// Stack count
+	for (int i = 0; i <= stackCount; i++) {
+		stackAngle = PI / 2 - i * stackStep;	// from PI / 2 to -PI / 2
+		xy = r * cosf(stackAngle);		// r * cos(u)
+		z = r * sinf(stackAngle);			// r * sin(u)
+
+		// Sector Count
+		for (int j = 0; j <= sectorCount; j++) {
+			sectorAngle = j * sectorStep;	// from 0 to 2PI
+
+			// Calculate vector3(x, y, z)
+			x = xy * cosf(sectorAngle);
+			y = xy * sinf(sectorAngle);
+
+			vector3 point(x, y, z);
+			vertices.push_back(point);
+		}
+	}
+
+	// 2. Find out vertices groups to form triangles
+	int k1, k2;				// indices
+
+	for (int i = 0; i < stackCount; i++) {
+		k1 = i * (sectorCount + 1);		// beginning of current stack row on sphere
+		k2 = (i + 1) * (sectorCount + 1);		// beginning of the next stack row on sphere
+
+		for (int j = 0; j < sectorCount; j++, k1++, k2++) {
+			// get 4 vertices per sector
+			//  v1--v3
+			//  |    |
+			//  v2--v4
+			vector3 v1 = vertices[k1];
+			vector3 v2 = vertices[k2];
+			vector3 v3 = vertices[k1 + 1];
+			vector3 v4 = vertices[k2 + 1];
+
+			// 1st stack stores only 1 triangle per sector
+			if (i == 0) {
+				AddTri(v1, v2, v4);
+			}
+			// One triangle for last stack
+			else if (i == stackCount - 1) {
+				AddTri(v1, v2, v3);
+			}
+			// 2 triangles for others
+			else {
+				AddQuad(v2, v4, v1, v3);
+			}
+		}
+	}
 	// -------------------------------
 
 	// Adding information about color
