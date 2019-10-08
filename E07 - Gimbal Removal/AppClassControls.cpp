@@ -7,7 +7,7 @@ void Application::ProcessMouseMovement(sf::Event a_event)
 	sf::Vector2i window = m_pWindow->getPosition();
 	m_v3Mouse.x = static_cast<float>(mouse.x - window.x);
 	m_v3Mouse.y = static_cast<float>(mouse.y - window.y);
-	if(!m_pSystem->IsWindowFullscreen() && !m_pSystem->IsWindowBorderless())
+	if (!m_pSystem->IsWindowFullscreen() && !m_pSystem->IsWindowBorderless())
 		m_v3Mouse += vector3(-8.0f, -32.0f, 0.0f);
 	gui.io.MousePos = ImVec2(m_v3Mouse.x, m_v3Mouse.y);
 }
@@ -397,27 +397,34 @@ void Application::ProcessKeyboard(void)
 		fSpeed *= 5.0f;
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-		m_pCameraMngr->MoveForward(fSpeed);
+		m_v3Eye.z -= 0.1f;
+	//m_pCameraMngr->MoveForward(fSpeed);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-		m_pCameraMngr->MoveForward(-fSpeed);
+		m_v3Eye.z += 0.1f;
+	//m_pCameraMngr->MoveForward(-fSpeed);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-		m_pCameraMngr->MoveSideways(-fSpeed);
+		m_v3Eye.x -= 0.1f;
+	//m_pCameraMngr->MoveSideways(-fSpeed);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-		m_pCameraMngr->MoveSideways(fSpeed);
+		m_v3Eye.x += 0.1f;
+	//m_pCameraMngr->MoveSideways(fSpeed);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-		m_pCameraMngr->MoveVertical(-fSpeed);
+		m_v3Eye.y -= 0.1f;
+	//m_pCameraMngr->MoveVertical(-fSpeed);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-		m_pCameraMngr->MoveVertical(fSpeed);
+		m_v3Eye.y += 0.1f;
+	//m_pCameraMngr->MoveVertical(fSpeed);
 #pragma endregion
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
 	{
 		if (fMultiplier)
-			m_v3Rotation.x -= 1.0f;
+			m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(1.0f), AXIS_X);
+		//m_v3Rotation.x -= 1.0f;
 		else
 			m_v3Rotation.x += 1.0f;
 	}
