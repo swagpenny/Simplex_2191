@@ -26,6 +26,10 @@ class MyCamera
 	vector2 m_v2Horizontal = vector2(-5.0f, 5.0f); //Orthographic horizontal projection
 	vector2 m_v2Vertical = vector2(-5.0f, 5.0f); //Orthographic vertical projection
 
+	vector3 m_v3Forward = vector3(0.0f, 0.0f, -1.0f); //vector for moving forward
+	vector3 m_v3Upward = vector3(0.0f, 1.0f, 0.0f); //vector for moving upwards
+	vector3 m_v3Rightward = vector3(0.0f, 1.0f, 0.0f); //vector for moving to the right
+
 	matrix4 m_m4View; //View matrix
 	matrix4 m_m4Projection; //Projection Matrix
 public:
@@ -230,6 +234,15 @@ public:
 	OUTPUT: ---
 	*/
 	void MoveSideways(float a_fDistance = 0.1f);
+
+	void ChangePitch(float a_fDegree);
+	/*
+	USAGE: Rotates the camera up or down, finds the new direction/vector
+	*/
+	void ChangeYaw(float a_fDegree);
+	/*
+	USAGE: Rotates the camera left or right, finds the new direction/vector
+	*/
 };
 
 } //namespace Simplex
