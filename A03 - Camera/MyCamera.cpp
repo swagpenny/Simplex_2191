@@ -188,7 +188,6 @@ void MyCamera::MoveSideways(float a_fDistance)
 
 void MyCamera::ChangePitch(float a_fDegree)
 {
-	// Rotate camera upwards or downwards
 	// Calculate the new forward vector
 	m_v3Forward = glm::normalize(
 		m_v3Forward * cosf(glm::radians(a_fDegree)) +
@@ -199,22 +198,21 @@ void MyCamera::ChangePitch(float a_fDegree)
 	m_v3Upward = glm::cross(m_v3Forward, m_v3Rightward);
 	m_v3Upward *= -1;
 
-	// Update LookAt
+	// updates the new taget vector
 	m_v3Target = m_v3Position + m_v3Forward;
 }
 
 void MyCamera::ChangeYaw(float a_fDegree)
 {
-	// Rotate camera leftwards or rightwards
 	// Calculate the new forward vector
 	m_v3Forward = glm::normalize(
 		m_v3Forward * cosf(glm::radians(a_fDegree)) -
 		m_v3Rightward * sinf(glm::radians(a_fDegree))
 	);
 
-	// Calculate the new right vector
+	// Calculate the new rightward vector
 	m_v3Rightward = glm::cross(m_v3Forward, m_v3Upward);
-
-	// Update LookAt
+	
+	// updates the new taget vector
 	m_v3Target = m_v3Position + m_v3Forward;
 }

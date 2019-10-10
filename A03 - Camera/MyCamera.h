@@ -235,14 +235,20 @@ public:
 	*/
 	void MoveSideways(float a_fDistance = 0.1f);
 
-	void ChangePitch(float a_fDegree);
+
 	/*
 	USAGE: Rotates the camera up or down, finds the new direction/vector
+	ARGUMENTS: float a_fDegree -> amount of degrees
+	OUTPUT: ---
 	*/
-	void ChangeYaw(float a_fDegree);
+	void ChangePitch(float a_fDegree);
 	/*
 	USAGE: Rotates the camera left or right, finds the new direction/vector
+	ARGUMENTS: float a_fDegree -> amount of degrees
+	OUTPUT: ---
 	*/
+	void ChangeYaw(float a_fDegree);
+	
 };
 
 } //namespace Simplex
