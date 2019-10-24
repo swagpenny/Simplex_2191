@@ -286,7 +286,106 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	Simplex that might help you [eSATResults] feel free to use it.
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
+	// Set variables for the future checks
+	c1 = GetCenterGlobal();
+	c2 = a_pOther->GetCenterGlobal();
 
+	e1 = GetHalfWidth();
+	e2 = a_pOther->GetHalfWidth();
+
+	u1 = static_cast<matrix3>(m_m4ToWorld);
+	u1[0] = m_m4ToWorld[0];
+	u1[1] = m_m4ToWorld[1];
+	u1[2] = m_m4ToWorld[2];
+
+	u2 = static_cast<matrix3>(a_pOther->m_m4ToWorld);
+	u2[0] = a_pOther->m_m4ToWorld[0];
+	u2[1] = a_pOther->m_m4ToWorld[1];
+	u2[2] = a_pOther->m_m4ToWorld[2];
+
+	matrix3 m3RotAxisInverse_A = glm::inverse(u1);
+	matrix3 m3RotAxisInverse_B = glm::inverse(u2);
+
+
+	float ra, rb;
+	matrix3 R, AbsR;
+
+	// Compute rotation matrix expressing b in a's coordinate frame
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			R[i][j] = glm::dot(u1[i], u2[j]);
+		}
+	}
+
+	// Compute translation vector t
+	vector3 t = a_pOther->m_v3Center - m_v3Center;
+	// Bring translation into a's coordinate frame
+	t = vector3(glm::dot(t, u1[0]), glm::dot(t, u1[1]), glm::dot(t, u1[2]));
+
+	// Compute common subexpressions. Add in an epsilon term to
+	// counteract arithmetic errors when two edges are parallel and
+	// their cross product is (near) null
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			AbsR[i][j] = std::abs(R[i][j]) + DBL_EPSILON;
+		}
+	}
+
+	// Test axes L = A0, L = A1, L = A2
+	for (int i = 0; i < 3; i++) {
+		ra = e1[i];
+		rb = e2[0] * AbsR[i][0] + e2[1] * AbsR[i][1] + e2[2] * AbsR[i][2];
+		if (std::abs(t[i]) > ra + rb) return eSATResults::SAT_AX;
+	}
+
+	// Test axes L = B0, L = B1, L = B2
+	for (int i = 0; i < 3; i++) {
+		ra = e1[0] * AbsR[0][i] + e1[1] * AbsR[1][i] + e1[2] * AbsR[2][i];
+		rb = e2[i];
+		if (std::abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) return eSATResults::SAT_AX;
+	}
+
+	// Test axis L = A0 x B0
+	ra = e1[1] * AbsR[2][0] + e1[2] * AbsR[1][0];
+	rb = e1[1] * AbsR[0][2] + e2[2] * AbsR[0][1];
+	if (std::abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return eSATResults::SAT_AX;
+
+	// Test axis L = A0 x B1
+	ra = e1[1] * AbsR[2][1] + e1[2] * AbsR[1][1];
+	rb = e1[0] * AbsR[0][2] + e2[2] * AbsR[0][0];
+	if (std::abs(t[2] * R[1][1] - t[1] * R[2][2]) > ra + rb) return eSATResults::SAT_AX;
+
+	// Test axis L = A0 x B2
+	ra = e1[1] * AbsR[2][2] + e1[2] * AbsR[1][2];
+	rb = e1[0] * AbsR[0][1] + e2[1] * AbsR[0][0];
+	if (std::abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return eSATResults::SAT_AX;
+
+	// Test axis L = A1 x B0
+	ra = e1[0] * AbsR[2][0] + e1[2] * AbsR[0][0];
+	rb = e1[1] * AbsR[1][2] + e2[2] * AbsR[1][1];
+	if (std::abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return eSATResults::SAT_AX;
+
+	// Test axis L = A1 x B1
+	ra = e1[0] * AbsR[2][1] + e1[2] * AbsR[0][1];
+	rb = e1[0] * AbsR[1][2] + e2[2] * AbsR[1][0];
+	if (std::abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return eSATResults::SAT_AX;
+
+	// Test axis L = A1 x B2
+	ra = e1[0] * AbsR[2][2] + e1[2] * AbsR[0][2];
+	rb = e1[0] * AbsR[1][1] + e2[1] * AbsR[1][0];
+	if (std::abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return eSATResults::SAT_AX;
+
+	// Test axis L = A2 x B0
+	ra = e1[0] * AbsR[1][0] + e1[1] * AbsR[0][0];
+	rb = e1[1] * AbsR[2][2] + e2[2] * AbsR[2][1];
+	if (std::abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return eSATResults::SAT_AX;
+
+	// Test axis L = A2 x B2
+	ra = e1[0] * AbsR[1][2] + e1[1] * AbsR[0][2];
+	rb = e1[0] * AbsR[2][1] + e2[1] * AbsR[2][0];
+	if (std::abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return eSATResults::SAT_AX;
+
+	// There is no axis test that separates this two objects
 	//there is no axis test that separates this two objects
 	return eSATResults::SAT_NONE;
 }
